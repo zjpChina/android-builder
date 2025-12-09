@@ -3,9 +3,11 @@ package com.example.uriloader
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.SharedPreferences
+import android.content.pm.ActivityInfo
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
 import android.webkit.WebChromeClient
@@ -13,7 +15,11 @@ import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.EditText
+import android.widget.LinearLayout
 import android.widget.ProgressBar
+import android.widget.RadioButton
+import android.widget.RadioGroup
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -38,6 +44,7 @@ class MainActivity : AppCompatActivity() {
     companion object {
         private const val PREF_NAME = "AppConfig"
         private const val KEY_SAVED_URI = "saved_uri"
+        private const val KEY_SCREEN_ORIENTATION = "screen_orientation"
         private const val LONG_PRESS_DURATION = 5000L // 5 seconds
     }
 
@@ -46,11 +53,19 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         sharedPreferences = getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+        applyScreenOrientation()
+
         webView = findViewById(R.id.webView)
         progressBar = findViewById(R.id.progressBar)
 
         setupWebView()
         loadConfiguredUri()
+    }
+
+    private fun applyScreenOrientation() {
+        // 默认为横屏 (ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE = 0)
+        val orientation = sharedPreferences.getInt(KEY_SCREEN_ORIENTATION, ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
+        requestedOrientation = orientation
     }
 
     @SuppressLint("SetJavaScriptEnabled", "ClickableViewAccessibility")
@@ -114,38 +129,96 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showConfigDialog() {
-        val currentUri = getConfiguredUri()
-        val input = EditText(this)
-        input.setText(currentUri)
-        input.setSelection(input.text.length)
+        val context = this
+        val layout = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(50, 40, 50, 10)
+        }
 
-        AlertDialog.Builder(this)
-            .setTitle("配置 URI")
-            .setMessage("请输入要加载的网址：")
-            .setView(input)
-            .setPositiveButton("保存并加载") { _, _ ->
-                val newUri = input.text.toString().trim()
+        // URI 输入框
+        val uriLabel = TextView(context).apply { text = "网址 (URI):" }
+        val inputUri = EditText(context).apply {
+            setText(getConfiguredUri())
+            setSelection(text.length)
+        }
+        
+        // 屏幕方向选择
+        val orientationLabel = TextView(context).apply { 
+            text = "\n屏幕方向:" 
+            setPadding(0, 20, 0, 10)
+        }
+        
+        val radioGroup = RadioGroup(context).apply {
+            orientation = RadioGroup.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+        }
+        
+        val rbLandscape = RadioButton(context).apply {
+            text = "横屏"
+            id = View.generateViewId()
+        }
+        
+        val rbPortrait = RadioButton(context).apply {
+            text = "竖屏"
+            id = View.generateViewId()
+        }
+
+        radioGroup.addView(rbLandscape)
+        radioGroup.addView(rbPortrait)
+
+        // 设置当前选中状态
+        val currentOrientation = sharedPreferences.getInt(KEY_SCREEN_ORIENTATION, ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
+        if (currentOrientation == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT) {
+            rbPortrait.isChecked = true
+        } else {
+            rbLandscape.isChecked = true
+        }
+
+        layout.addView(uriLabel)
+        layout.addView(inputUri)
+        layout.addView(orientationLabel)
+        layout.addView(radioGroup)
+
+        AlertDialog.Builder(context)
+            .setTitle("应用配置")
+            .setView(layout)
+            .setPositiveButton("保存并重启") { _, _ ->
+                val newUri = inputUri.text.toString().trim()
+                val newOrientation = if (rbPortrait.isChecked) {
+                    ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                } else {
+                    ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+                }
+
                 if (newUri.isNotEmpty()) {
-                    saveUri(newUri)
+                    saveConfig(newUri, newOrientation)
+                    applyScreenOrientation() // 立即应用屏幕方向
                     webView.loadUrl(newUri)
-                    Toast.makeText(this, "已保存配置", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "配置已保存", Toast.LENGTH_SHORT).show()
                 }
             }
             .setNegativeButton("取消", null)
             .setNeutralButton("清除配置") { _, _ ->
-                clearSavedUri()
-                loadConfiguredUri() // 重新加载默认配置
-                Toast.makeText(this, "已清除自定义配置", Toast.LENGTH_SHORT).show()
+                clearConfig()
+                applyScreenOrientation()
+                loadConfiguredUri()
+                Toast.makeText(context, "已恢复默认配置", Toast.LENGTH_SHORT).show()
             }
             .show()
     }
 
-    private fun saveUri(uri: String) {
-        sharedPreferences.edit().putString(KEY_SAVED_URI, uri).apply()
+    private fun saveConfig(uri: String, orientation: Int) {
+        sharedPreferences.edit()
+            .putString(KEY_SAVED_URI, uri)
+            .putInt(KEY_SCREEN_ORIENTATION, orientation)
+            .apply()
     }
 
-    private fun clearSavedUri() {
-        sharedPreferences.edit().remove(KEY_SAVED_URI).apply()
+    private fun clearConfig() {
+        sharedPreferences.edit()
+            .remove(KEY_SAVED_URI)
+            .remove(KEY_SCREEN_ORIENTATION)
+            .apply()
     }
 
     private fun loadConfiguredUri() {

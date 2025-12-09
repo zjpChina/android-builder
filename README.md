@@ -48,7 +48,7 @@ apk-builder/
 
 应用支持多种配置方式，优先级从高到低：
 
-1. **手动配置**：长按屏幕 5 秒，在弹出的对话框中输入 URI。此配置会持久化保存。
+1. **手动配置**：长按屏幕 5 秒，在弹出的对话框中输入 URI 并选择屏幕方向（横屏/竖屏）。此配置会持久化保存。
 2. **外部文件配置**：`/sdcard/Android/data/com.example.uriloader/files/config.json`
 3. **默认配置**：内置的 `assets/config.json`
 
