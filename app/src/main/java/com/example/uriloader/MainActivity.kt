@@ -1,14 +1,21 @@
 package com.example.uriloader
 
 import android.annotation.SuppressLint
+import android.content.Context
+import android.content.SharedPreferences
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.view.MotionEvent
 import android.view.View
 import android.webkit.WebChromeClient
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.EditText
 import android.widget.ProgressBar
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import org.json.JSONObject
 import java.io.BufferedReader
@@ -19,11 +26,26 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var webView: WebView
     private lateinit var progressBar: ProgressBar
+    private lateinit var sharedPreferences: SharedPreferences
+    
+    private val handler = Handler(Looper.getMainLooper())
+    private var isLongPress = false
+    private val longPressRunnable = Runnable {
+        isLongPress = true
+        showConfigDialog()
+    }
+
+    companion object {
+        private const val PREF_NAME = "AppConfig"
+        private const val KEY_SAVED_URI = "saved_uri"
+        private const val LONG_PRESS_DURATION = 5000L // 5 seconds
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        sharedPreferences = getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
         webView = findViewById(R.id.webView)
         progressBar = findViewById(R.id.progressBar)
 
@@ -31,7 +53,7 @@ class MainActivity : AppCompatActivity() {
         loadConfiguredUri()
     }
 
-    @SuppressLint("SetJavaScriptEnabled")
+    @SuppressLint("SetJavaScriptEnabled", "ClickableViewAccessibility")
     private fun setupWebView() {
         webView.settings.apply {
             javaScriptEnabled = true
@@ -75,6 +97,55 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+
+        // 添加长按检测
+        webView.setOnTouchListener { _, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    isLongPress = false
+                    handler.postDelayed(longPressRunnable, LONG_PRESS_DURATION)
+                }
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    handler.removeCallbacks(longPressRunnable)
+                }
+            }
+            false // 不消费事件，让WebView正常处理点击和滑动
+        }
+    }
+
+    private fun showConfigDialog() {
+        val currentUri = getConfiguredUri()
+        val input = EditText(this)
+        input.setText(currentUri)
+        input.setSelection(input.text.length)
+
+        AlertDialog.Builder(this)
+            .setTitle("配置 URI")
+            .setMessage("请输入要加载的网址：")
+            .setView(input)
+            .setPositiveButton("保存并加载") { _, _ ->
+                val newUri = input.text.toString().trim()
+                if (newUri.isNotEmpty()) {
+                    saveUri(newUri)
+                    webView.loadUrl(newUri)
+                    Toast.makeText(this, "已保存配置", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("取消", null)
+            .setNeutralButton("清除配置") { _, _ ->
+                clearSavedUri()
+                loadConfiguredUri() // 重新加载默认配置
+                Toast.makeText(this, "已清除自定义配置", Toast.LENGTH_SHORT).show()
+            }
+            .show()
+    }
+
+    private fun saveUri(uri: String) {
+        sharedPreferences.edit().putString(KEY_SAVED_URI, uri).apply()
+    }
+
+    private fun clearSavedUri() {
+        sharedPreferences.edit().remove(KEY_SAVED_URI).apply()
     }
 
     private fun loadConfiguredUri() {
@@ -119,6 +190,7 @@ class MainActivity : AppCompatActivity() {
                     <div class="container">
                         <h1>🔗 URI Loader</h1>
                         <p>请配置 <code>config.json</code> 文件中的 URI</p>
+                        <p>长按屏幕 5 秒可手动配置地址</p>
                         <p>配置文件位置：<br><code>/sdcard/Android/data/com.example.uriloader/files/config.json</code></p>
                     </div>
                 </body>
@@ -131,7 +203,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun getConfiguredUri(): String {
-        // 优先读取外部存储的配置文件
+        // 1. 优先读取 SharedPreferences 中保存的配置
+        val savedUri = sharedPreferences.getString(KEY_SAVED_URI, "")
+        if (!savedUri.isNullOrEmpty()) {
+            return savedUri
+        }
+
+        // 2. 读取外部存储的配置文件
         val externalConfigFile = File(getExternalFilesDir(null), "config.json")
         if (externalConfigFile.exists()) {
             try {
@@ -143,7 +221,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // 回退到assets中的默认配置
+        // 3. 回退到assets中的默认配置
         try {
             val inputStream = assets.open("config.json")
             val reader = BufferedReader(InputStreamReader(inputStream))

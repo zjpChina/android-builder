@@ -46,11 +46,11 @@ apk-builder/
 
 ### 运行时配置 (可选)
 
-应用会优先读取外部存储的配置文件：
+应用支持多种配置方式，优先级从高到低：
 
-```
-/sdcard/Android/data/com.example.uriloader/files/config.json
-```
+1. **手动配置**：长按屏幕 5 秒，在弹出的对话框中输入 URI。此配置会持久化保存。
+2. **外部文件配置**：`/sdcard/Android/data/com.example.uriloader/files/config.json`
+3. **默认配置**：内置的 `assets/config.json`
 
 你可以在安装应用后，将自定义的 `config.json` 放到上述路径来覆盖默认配置。
 
