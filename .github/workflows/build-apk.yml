@@ -45,6 +45,9 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
 
+    - name: Generate Gradle Wrapper
+      run: gradle wrapper --gradle-version 8.4
+
     - name: Build Debug APK
       run: ./gradlew assembleDebug --no-daemon
 
@@ -94,6 +97,9 @@ jobs:
       
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
+
+    - name: Generate Gradle Wrapper
+      run: gradle wrapper --gradle-version 8.4
 
     - name: Build Signed Release APK
       if: ${{ secrets.KEYSTORE_BASE64 != '' }}

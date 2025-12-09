@@ -1,6 +1,7 @@
 # Gradle files
 .gradle/
 build/
+# Keep gradle wrapper jar - required for builds
 !gradle/wrapper/gradle-wrapper.jar
 
 # Local configuration file
