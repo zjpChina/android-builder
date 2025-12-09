@@ -4,7 +4,10 @@
         <item name="colorPrimary">#667eea</item>
         <item name="colorPrimaryDark">#5a6fd6</item>
         <item name="colorAccent">#764ba2</item>
-        <item name="android:statusBarColor">#667eea</item>
-        <item name="android:navigationBarColor">#667eea</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
     </style>
 </resources>
