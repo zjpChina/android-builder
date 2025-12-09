@@ -283,7 +283,7 @@ class MainActivity : AppCompatActivity() {
                 </head>
                 <body>
                     <div class="container">
-                        <h1>🔗 URI Loader</h1>
+                        <h1>🔗 BJSZ控制端</h1>
                         <p>请配置 <code>config.json</code> 文件中的 URI</p>
                         <p>长按屏幕 5 秒可手动配置地址</p>
                         <p>配置文件位置：<br><code>/sdcard/Android/data/com.example.uriloader/files/config.json</code></p>
