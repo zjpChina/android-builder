@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.URILoader" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="colorPrimary">#667eea</item>
+        <item name="colorPrimaryDark">#5a6fd6</item>
+        <item name="colorAccent">#764ba2</item>
+        <item name="android:statusBarColor">#667eea</item>
+        <item name="android:navigationBarColor">#667eea</item>
+    </style>
+</resources>

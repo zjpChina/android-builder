@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <!-- 链接图标 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,31.5c-3.3,0 -6,2.7 -6,6v9h4.5v-9c0,-0.83 0.67,-1.5 1.5,-1.5s1.5,0.67 1.5,1.5v9h4.5v-9c0,-3.3 -2.7,-6 -6,-6z" />
+    
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,76.5c3.3,0 6,-2.7 6,-6v-9h-4.5v9c0,0.83 -0.67,1.5 -1.5,1.5s-1.5,-0.67 -1.5,-1.5v-9h-4.5v9c0,3.3 2.7,6 6,6z" />
+    
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M51.75,49.5v9h4.5v-9z" />
+    
+    <!-- 圆形装饰 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.3"
+        android:pathData="M54,54m-20,0a20,20 0,1 1,40 0a20,20 0,1 1,-40 0"
+        android:strokeWidth="2"
+        android:strokeColor="#FFFFFF" />
+        
+</vector>
