@@ -135,15 +135,25 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // 添加长按检测
+        // 添加长按检测 - 只在左上角区域有效
+        val cornerSize = 100 // 左上角有效区域大小（像素）
         webView.setOnTouchListener { _, event ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
                     isLongPress = false
-                    handler.postDelayed(longPressRunnable, LONG_PRESS_DURATION)
+                    // 只有在左上角区域才启动长按检测
+                    if (event.x < cornerSize && event.y < cornerSize) {
+                        handler.postDelayed(longPressRunnable, LONG_PRESS_DURATION)
+                    }
                 }
                 MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                     handler.removeCallbacks(longPressRunnable)
+                }
+                MotionEvent.ACTION_MOVE -> {
+                    // 如果手指移出左上角区域，取消长按
+                    if (event.x >= cornerSize || event.y >= cornerSize) {
+                        handler.removeCallbacks(longPressRunnable)
+                    }
                 }
             }
             false // 不消费事件，让WebView正常处理点击和滑动
