@@ -36,9 +36,7 @@ class MainActivity : AppCompatActivity() {
     
     private val handler = Handler(Looper.getMainLooper())
     private var isLongPress = false
-    private var touchStartX = 0f
-    private var touchStartY = 0f
-    private val cornerSize = 100 // 左上角有效区域大小（像素）
+    private lateinit var longPressZone: View
     private val longPressRunnable = Runnable {
         isLongPress = true
         showConfigDialog()
@@ -61,37 +59,32 @@ class MainActivity : AppCompatActivity() {
 
         webView = findViewById(R.id.webView)
         progressBar = findViewById(R.id.progressBar)
+        longPressZone = findViewById(R.id.longPressZone)
 
         setupWebView()
+        setupLongPressZone()
         loadConfiguredUri()
     }
 
-    // 使用 dispatchTouchEvent 来可靠地检测左上角长按
-    override fun dispatchTouchEvent(event: MotionEvent): Boolean {
-        when (event.action) {
-            MotionEvent.ACTION_DOWN -> {
-                touchStartX = event.rawX
-                touchStartY = event.rawY
-                isLongPress = false
-                // 只有在左上角区域才启动长按检测
-                if (event.rawX < cornerSize && event.rawY < cornerSize) {
+    // 设置左上角长按触发区域
+    @SuppressLint("ClickableViewAccessibility")
+    private fun setupLongPressZone() {
+        longPressZone.setOnTouchListener { _, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    isLongPress = false
                     handler.postDelayed(longPressRunnable, LONG_PRESS_DURATION)
+                    true // 消费事件
                 }
-            }
-            MotionEvent.ACTION_MOVE -> {
-                // 如果手指移动超过一定距离，取消长按
-                val dx = Math.abs(event.rawX - touchStartX)
-                val dy = Math.abs(event.rawY - touchStartY)
-                if (dx > 20 || dy > 20) {
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                     handler.removeCallbacks(longPressRunnable)
+                    !isLongPress // 如果已触发长按，消费事件；否则传递给下层
                 }
-            }
-            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                handler.removeCallbacks(longPressRunnable)
+                else -> false
             }
         }
-        return super.dispatchTouchEvent(event)
     }
+
 
     override fun onResume() {
         super.onResume()
@@ -166,7 +159,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // 长按检测已移至 dispatchTouchEvent 方法中实现
+        // 长按检测通过 longPressZone View 实现
     }
 
     private fun showConfigDialog() {
